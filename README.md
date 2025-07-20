@@ -122,7 +122,7 @@ dot_env::env environment;
     environment.load_env("custom.env");
     
     // Get a string value
-    if (auto value = environment.get("DATABASE_URL")) {
+    if (const std::string value = environment.get("DATABASE_URL")) {
         std::cout << "Database URL: " << *value << std::endl;
     }
     
