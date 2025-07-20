@@ -75,17 +75,36 @@ cmake -B build -DDOT_ENV_OVERRIDE_SYSTEM=ON
 # Configure with system override disabled (default)
 cmake -B build -DDOT_ENV_OVERRIDE_SYSTEM=OFF
 ```
-### Environment Variable Handling
+## Environment Variable Handling
 
-When loading variables from a `.env` file, the library handles them based on your build configuration:
+When accessing environment variables, the library follows this order:
+
+### Lookup Priority
+1. First checks internal variables (loaded from `.env` files)
+2. Then checks system environment variables
+
+### Loading Behavior
+When loading from `.env` files, the behavior depends on the configuration:
 
 #### With DOT_ENV_OVERRIDE_SYSTEM=OFF (Default):
-1. System environment variables take precedence
-2. `.env` file variables are only loaded if they don't exist in the system
+- New variables from `.env` files are added to system environment
+- Existing system variables are preserved
 
 #### With DOT_ENV_OVERRIDE_SYSTEM=ON:
-1. `.env` file variables take precedence
-2. Can override exis
+- All variables from `.env` files are added to system environment
+- Can override existing system variables
+
+You can also control this behavior at runtime:
+```cpp
+// Use compile-time default behavior
+environment.load_env();
+
+// Override system variables regardless of compile-time setting
+environment.load_env(".env", true);
+
+// Preserve system variables regardless of compile-time setting
+environment.load_env(".env", false);
+```
 
 ## Usage
 
