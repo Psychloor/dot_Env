@@ -26,8 +26,18 @@ namespace dot_env
             { return std::tolower(lhs) == std::tolower(rhs); });
     }
 
-    bool env::load_env(const std::string_view filename)
+    bool env::load_env(const std::string_view filename,
+                       const std::optional<bool> override_system)
     {
+        // Use the compile-time default if no runtime override is provided
+        const bool should_override = override_system.value_or(
+#ifdef DOT_ENV_OVERRIDE_SYSTEM
+            true
+#else
+            false
+#endif
+        );
+
         const auto current_path = std::filesystem::current_path();
         std::filesystem::path env_path;
         for (const auto& entry :
@@ -48,9 +58,10 @@ namespace dot_env
             return false;
         }
 
-        parse_env_file(env_path);
+        parse_env_file(env_path, should_override);
         return true;
     }
+
 
     std::optional<std::string> env::get(const std::string_view& key)
     {
@@ -95,7 +106,8 @@ namespace dot_env
                                  std::string(key));
     }
 
-    void env::parse_env_file(const std::filesystem::path& path)
+    void env::parse_env_file(const std::filesystem::path& path,
+                             const bool override_system)
     {
         std::ifstream file(path);
         if (!file.is_open())
@@ -105,7 +117,6 @@ namespace dot_env
         }
 
         std::string line;
-
         while (std::getline(file, line))
         {
             // Trim whitespace
@@ -139,24 +150,29 @@ namespace dot_env
                 continue;
             }
 
-            if (auto [it, inserted] = env_vars_.emplace(key, value); !inserted)
+            // Store in an internal map
+            auto [it, inserted] = env_vars_.emplace(key, value);
+            if (!inserted)
             {
                 std::cerr << "Duplicate env key: " << key << ", overwriting.\n";
-                it->second = value; // overwrite in the map too
+                it->second = value;
             }
 
-            // Inject into actual environment
-#ifndef _WIN32
-            const char* existing_env = std::getenv(key.c_str());
-#else
+            // Check existing system environment variable
+#ifdef _WIN32
             char* existing_env = nullptr;
-            size_t _size;
-            _dupenv_s(&existing_env, &_size, key.c_str());
+            size_t size;
+            _dupenv_s(&existing_env, &size, key.c_str());
+#else
+            const char* existing_env = std::getenv(key.c_str());
 #endif
 
-            if (!existing_env || std::string(existing_env).empty())
+            // Decide whether to set the system environment variable
+            bool should_set = override_system || !existing_env ||
+                (existing_env && std::string(existing_env).empty());
+
+            if (should_set)
             {
-                // Inject only if not already set
 #ifdef _WIN32
                 _putenv_s(key.c_str(), value.c_str());
                 if (existing_env)
@@ -167,4 +183,5 @@ namespace dot_env
             }
         }
     }
+
 } // namespace dot_env

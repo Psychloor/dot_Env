@@ -23,16 +23,17 @@ namespace dot_env
          * This function searches for the specified file in the current working
          * directory. If the file is found, it reads and parses the environment
          * variables contained within the file. The variables are stored
-         * internally and are also injected into the system's environment
-         * variables if they are not already set.
+         * internally and injected into the system's environment variables.
          *
          * @param filename The name of the file to load environment variables
          * from. If not specified, defaults to ".env".
+         * @param override_system If provided, overrides the compile-time default.
+         *        If not provided, uses the value set by DOT_ENV_OVERRIDE_SYSTEM.
          * @return Returns true if the file was successfully found and parsed,
          *         otherwise returns false.
          */
-        bool load_env(std::string_view filename = ".env");
-
+        bool load_env(std::string_view filename = ".env",
+                      std::optional<bool> override_system = std::nullopt);
 
         /**
          * Retrieves the value of the specified environment variable.
@@ -93,7 +94,8 @@ namespace dot_env
 
 
     private:
-        void parse_env_file(const std::filesystem::path& path);
+        void parse_env_file(const std::filesystem::path& path,
+                            bool override_system);
 
 
         std::unordered_map<std::string, std::string> env_vars_ = {};

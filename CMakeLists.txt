@@ -1,3 +1,4 @@
+
 cmake_minimum_required(VERSION 3.31)
 
 project(dot_env
@@ -6,6 +7,9 @@ project(dot_env
         HOMEPAGE_URL "https://github.com/yourusername/dot_env"
         LANGUAGES CXX
 )
+
+# Add option for system environment variable override
+option(DOT_ENV_OVERRIDE_SYSTEM "Allow .env files to override system environment variables" OFF)
 
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
@@ -22,6 +26,11 @@ add_library(${PROJECT_NAME} STATIC
 
 # Add an alias target for use in other projects
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
+
+# Configure compile definitions based on options
+if(DOT_ENV_OVERRIDE_SYSTEM)
+    target_compile_definitions(${PROJECT_NAME} PUBLIC DOT_ENV_OVERRIDE_SYSTEM)
+endif()
 
 # Set target properties
 target_include_directories(${PROJECT_NAME}

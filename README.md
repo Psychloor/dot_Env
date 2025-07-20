@@ -59,6 +59,34 @@ cmake
 add_subdirectory(path/to/dot_env)
 target_link_libraries(your_target PRIVATE dot_env::dot_env)
 ```
+
+## Build Configuration
+
+### CMake Options
+
+- `DOT_ENV_OVERRIDE_SYSTEM` (Default: OFF) - When enabled, allows variables from `.env` files to override existing system environment variables.
+
+Example:
+```
+bash
+# Configure with system override enabled
+cmake -B build -DDOT_ENV_OVERRIDE_SYSTEM=ON
+
+# Configure with system override disabled (default)
+cmake -B build -DDOT_ENV_OVERRIDE_SYSTEM=OFF
+```
+### Environment Variable Handling
+
+When loading variables from a `.env` file, the library handles them based on your build configuration:
+
+#### With DOT_ENV_OVERRIDE_SYSTEM=OFF (Default):
+1. System environment variables take precedence
+2. `.env` file variables are only loaded if they don't exist in the system
+
+#### With DOT_ENV_OVERRIDE_SYSTEM=ON:
+1. `.env` file variables take precedence
+2. Can override exis
+
 ## Usage
 
 ### Basic Usage
@@ -115,6 +143,14 @@ QUOTED_VALUE="hello world"
 NUMBER=42
 FLOAT=3.14
 ```
+## Environment Variable Handling
+
+When loading variables from a `.env` file, the library handles them in the following ways:
+
+### Loading Priority
+1. First checks for existing system environment variables
+2. Then loads from the `.env` file, which can override system variables if `override_system` is set to true
+
 ## License
 
 MIT License
